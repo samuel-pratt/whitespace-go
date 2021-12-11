@@ -170,8 +170,25 @@ func main() {
 				switch command {
 				// TTS = pop top two items of stack, and store the top item in heap
 				case "S":
+					// Pop first item
+					index := len(stack) - 1
+					itemOne := stack[index]
+					stack = stack[:index]
+
+					// Pop second item
+					index = len(stack) - 1
+					itemTwo := stack[index]
+					stack = stack[:index]
+
+					heap[itemTwo] = itemOne
 				// TTT = pop top item of stack, and push the item corresponding to that heap address to the top of the stack
 				case "T":
+					// Pop first item
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					stack = append(stack, heap[item])
 				}
 			// TN = I/O
 			case 9:
