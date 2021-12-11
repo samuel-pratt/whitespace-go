@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -45,6 +46,7 @@ func parseInt(instructions []byte) (value, test int) {
 
 func main() {
 	var stack []int
+	var heap = make(map[int]int)
 	var args = os.Args[1:]
 
 	if len(args) != 1 {
@@ -142,6 +144,7 @@ func main() {
 			case "TN":
 			// NNN = end program
 			case "NN":
+				os.Exit(0)
 			}
 		// T
 		case 9:
@@ -165,7 +168,7 @@ func main() {
 			case 10:
 				var command = string(instructions[i+2])
 				switch command {
-				// TTS = pop top two items of stack, and store the top item in
+				// TTS = pop top two items of stack, and store the top item in heap
 				case "S":
 				// TTT = pop top item of stack, and push the item corresponding to that heap address to the top of the stack
 				case "T":
@@ -176,15 +179,48 @@ func main() {
 				switch command {
 				// TNSS = pop the top integer and print as character
 				case "SS":
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					fmt.Print(strconv.Itoa(item))
 				// TNST = pop the top integer and print as integer
 				case "ST":
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					fmt.Print(item)
 				// TNTS = pop the top integer, read a character from input, and save to heap with popped value as key, input as value
 				case "TS":
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					reader := bufio.NewReader(os.Stdin)
+					char, err := reader.ReadByte()
+					if err != nil {
+						fmt.Print(err)
+						return
+					}
+
+					heap[item] = int(char)
 				// TNTT = pop the top integer, read an integer from input, and save to heap with popped value as key, input as value
 				case "TT":
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					var integer int
+					_, err := fmt.Scanf("%d", &integer)
+					if err != nil {
+						fmt.Print(err)
+						return
+					}
+
+					heap[item] = integer
 				}
 			}
 		}
 	}
-	fmt.Print(stack)
 }
