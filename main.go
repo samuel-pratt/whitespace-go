@@ -9,14 +9,15 @@ import (
 )
 
 func parseInt(instructions []byte) (value, test int) {
+	// Counts how many steps to take after retun
 	var offset int = 1
 
 	// Determine positive or negative from fist byte
-	var odd_even int
+	var pos_neg int
 	if instructions[0] == 32 {
-		odd_even = 1
+		pos_neg = 1
 	} else {
-		odd_even = -1
+		pos_neg = -1
 	}
 
 	// Create string in binary until hitting N
@@ -33,12 +34,13 @@ func parseInt(instructions []byte) (value, test int) {
 		}
 	}
 
+	// Convert binary to base10
 	decimal, err := strconv.ParseInt(binary.String(), 2, 10)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	return (int(decimal) * odd_even), offset
+	return (int(decimal) * pos_neg), offset
 }
 
 func main() {
@@ -68,8 +70,8 @@ func main() {
 		switch instructions[i] {
 		// S = stack manipulation
 		case 32:
+			// SS = push number onto stack
 			if instructions[i+1] == 32 {
-				// SS = push number onto stack
 				value, offset := parseInt(instructions[i+2:])
 				stack = append(stack, value)
 				i = i + 2 + offset
@@ -78,17 +80,49 @@ func main() {
 
 			var command = string(instructions[i+1]) + string(instructions[i+2])
 			switch command {
-			// SNS = duplicate top element of stack onto second element
+			// SNS = duplicate top element of stack
 			case "NS":
+				index := len(stack) - 1
+				stack = append(stack, stack[index])
 			// STS = duplicate the 0 based n-th item from stack onto top of stack
 			case "TS":
+				value, offset := parseInt(instructions[i+3:])
+				stack = append(stack, stack[value])
+				i = i + 3 + offset
 			// SNT = swap top two items on stack
 			case "NT":
+				// Pop first item
+				index := len(stack) - 1
+				itemOne := stack[index]
+				stack = stack[:index]
+
+				// Pop second item
+				index = len(stack) - 1
+				itemTwo := stack[index]
+				stack = stack[:index]
+
+				stack = append(stack, itemOne)
+				stack = append(stack, itemTwo)
 			// SNN = discard top item on stack
 			case "NN":
+				// Pop
+				index := len(stack) - 1
+				stack = stack[:index]
 			// STN = discard n items from top of stack while keeping top item
 			case "TN":
+				index := len(stack) - 1
+				item := stack[index]
+				stack = stack[:index]
 
+				value, offset := parseInt(instructions[i+3:])
+				for j := 0; j < value; j++ {
+					index := len(stack) - 1
+					stack = stack[:index]
+				}
+
+				stack = append(stack, item)
+
+				i = i + 3 + offset
 			}
 		// N = flow control
 		case 10:
