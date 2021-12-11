@@ -9,9 +9,17 @@ import (
 	"strings"
 )
 
-func parseInt(instructions []byte) (value, test int) {
+func parseInt(instructions []byte) (value, offset int) {
+	if len(instructions) == 2 {
+		return 0, 2
+	} else if len(instructions) == 1 {
+		return 0, 1
+	} else if len(instructions) == 0 {
+		return 0, 0
+	}
+
 	// Counts how many steps to take after retun
-	var offset int = 1
+	offset = 1
 
 	// Determine positive or negative from fist byte
 	var pos_neg int
@@ -23,13 +31,14 @@ func parseInt(instructions []byte) (value, test int) {
 
 	// Create string in binary until hitting N
 	var binary strings.Builder
+loop:
 	for _, curr := range instructions[1:] {
 		offset = offset + 1
 		switch curr {
 		case 32:
 			binary.WriteString("0")
 		case 10:
-			break
+			break loop
 		case 9:
 			binary.WriteString("1")
 		}
@@ -76,25 +85,31 @@ func main() {
 			if instructions[i+1] == 32 {
 				value, offset := parseInt(instructions[i+2:])
 				stack = append(stack, value)
-				i = i + 2 + offset
+				i = i + 1 + offset
 				continue
 			}
 
 			var command = string(instructions[i+1]) + string(instructions[i+2])
 			switch command {
 			// SNS = duplicate top element of stack
-			case "NS":
+			case "\n ":
 				index := len(stack) - 1
 				stack = append(stack, stack[index])
 
+				i = i + 3
+				continue
+
 			// STS = duplicate the 0 based n-th item from stack onto top of stack
-			case "TS":
+			case "\t ":
 				value, offset := parseInt(instructions[i+3:])
 				stack = append(stack, stack[value])
-				i = i + 3 + offset
+				i = i + 2 + offset
+
+				i = i + 2
+				continue
 
 			// SNT = swap top two items on stack
-			case "NT":
+			case "\n\t":
 				// Pop first item
 				index := len(stack) - 1
 				itemOne := stack[index]
@@ -108,14 +123,20 @@ func main() {
 				stack = append(stack, itemOne)
 				stack = append(stack, itemTwo)
 
+				i = i + 2
+				continue
+
 			// SNN = discard top item on stack
-			case "NN":
+			case "\n\n":
 				// Pop
 				index := len(stack) - 1
 				stack = stack[:index]
 
+				i = i + 2
+				continue
+
 			// STN = discard n items from top of stack while keeping top item
-			case "TN":
+			case "\t\n":
 				index := len(stack) - 1
 				item := stack[index]
 				stack = stack[:index]
@@ -128,26 +149,33 @@ func main() {
 
 				stack = append(stack, item)
 
-				i = i + 3 + offset
+				i = i + 2 + offset
+				continue
 			}
 		// N = flow control
 		case 10:
 			var command = string(instructions[i+1]) + string(instructions[i+2])
 			switch command {
 			// NSS = mark a location in the program as a subroutine with a label
-			case "SS":
+			case "  ":
+
 			// NST = call a subroutine with a given label
-			case "ST":
+			case " \t":
+
 			// NSN = jump to given label
-			case "SN":
+			case " \n":
+
 			// NTS = pop top integer off stack, if 0 jump to given label, else keep popped item removed and continue
-			case "TS":
+			case "\t ":
+
 			// NTT = pop top integer off stack and jump to given label if negative, else keep popped item removed and continue
-			case "TT":
+			case "\t\t":
+
 			// NTN = end subroutine and return to caller
-			case "TN":
+			case "\t\n":
+
 			// NNN = end program
-			case "NN":
+			case "\n\n":
 				os.Exit(0)
 			}
 		// T
@@ -158,7 +186,7 @@ func main() {
 				var command = string(instructions[i+2]) + string(instructions[i+3])
 				switch command {
 				// TSSS = add the top two items of the stack together
-				case "SS":
+				case "  ":
 					indexOne := len(stack) - 1
 					itemOne := stack[indexOne]
 
@@ -167,8 +195,11 @@ func main() {
 
 					stack[indexOne] = itemOne + itemTwo
 
+					i = i + 3
+					continue
+
 				// TSST = subtract the top item of stack from second item on the stack
-				case "ST":
+				case " \t":
 					index := len(stack) - 1
 					itemOne := stack[index]
 
@@ -177,8 +208,11 @@ func main() {
 
 					stack[index] = itemTwo - itemOne
 
+					i = i + 3
+					continue
+
 				// TSSN = multiply the top two items on the stack together
-				case "SN":
+				case " \n":
 					indexOne := len(stack) - 1
 					itemOne := stack[indexOne]
 
@@ -187,8 +221,11 @@ func main() {
 
 					stack[indexOne] = itemOne * itemTwo
 
+					i = i + 3
+					continue
+
 				// TSTS = integer division the second item on the stack by the top item on the stack
-				case "TS":
+				case "\t ":
 					index := len(stack) - 1
 					itemOne := stack[index]
 
@@ -197,8 +234,11 @@ func main() {
 
 					stack[index] = int(itemTwo / itemOne)
 
+					i = i + 3
+					continue
+
 				// TSTT = modulo of the second item on the stack with the top item on the stack
-				case "TT":
+				case "\t\t":
 					index := len(stack) - 1
 					itemOne := stack[index]
 
@@ -206,56 +246,38 @@ func main() {
 					itemTwo := stack[index]
 
 					stack[index] = itemTwo % itemOne
-				}
-			// TT = Heap Access
-			case 10:
-				var command = string(instructions[i+2])
-				switch command {
-				// TTS = pop top two items of stack, and store the top item in heap
-				case "S":
-					// Pop first item
-					index := len(stack) - 1
-					itemOne := stack[index]
-					stack = stack[:index]
 
-					// Pop second item
-					index = len(stack) - 1
-					itemTwo := stack[index]
-					stack = stack[:index]
-
-					heap[itemTwo] = itemOne
-
-				// TTT = pop top item of stack, and push the item corresponding to that heap address to the top of the stack
-				case "T":
-					// Pop first item
-					index := len(stack) - 1
-					item := stack[index]
-					stack = stack[:index]
-
-					stack = append(stack, heap[item])
+					i = i + 3
+					continue
 				}
 			// TN = I/O
-			case 9:
+			case 10:
 				var command = string(instructions[i+2]) + string(instructions[i+3])
 				switch command {
 				// TNSS = pop the top integer and print as character
-				case "SS":
+				case "  ":
 					index := len(stack) - 1
 					item := stack[index]
 					stack = stack[:index]
 
-					fmt.Print(strconv.Itoa(item))
+					fmt.Print(string(byte(item)))
+
+					i = i + 3
+					continue
 
 				// TNST = pop the top integer and print as integer
-				case "ST":
+				case " \t":
 					index := len(stack) - 1
 					item := stack[index]
 					stack = stack[:index]
 
 					fmt.Print(item)
 
+					i = i + 3
+					continue
+
 				// TNTS = pop the top integer, read a character from input, and save to heap with popped value as key, input as value
-				case "TS":
+				case "\t ":
 					index := len(stack) - 1
 					item := stack[index]
 					stack = stack[:index]
@@ -269,8 +291,11 @@ func main() {
 
 					heap[item] = int(char)
 
+					i = i + 3
+					continue
+
 				// TNTT = pop the top integer, read an integer from input, and save to heap with popped value as key, input as value
-				case "TT":
+				case "\t\t":
 					index := len(stack) - 1
 					item := stack[index]
 					stack = stack[:index]
@@ -283,8 +308,47 @@ func main() {
 					}
 
 					heap[item] = integer
+
+					i = i + 3
+					continue
+				}
+			// TT = Heap Access
+			case 9:
+				var command = string(instructions[i+2])
+				switch command {
+				// TTS = pop top two items of stack, and store the top item in heap
+				case " ":
+					// Pop first item
+					index := len(stack) - 1
+					itemOne := stack[index]
+					stack = stack[:index]
+
+					// Pop second item
+					index = len(stack) - 1
+					itemTwo := stack[index]
+					stack = stack[:index]
+
+					heap[itemTwo] = itemOne
+
+					i = i + 2
+					continue
+
+				// TTT = pop top item of stack, and push the item corresponding to that heap address to the top of the stack
+				case "\t":
+					// Pop first item
+					index := len(stack) - 1
+					item := stack[index]
+					stack = stack[:index]
+
+					stack = append(stack, heap[item])
+
+					i = i + 2
+					continue
 				}
 			}
+
 		}
 	}
+	fmt.Println(stack)
+	fmt.Println(heap)
 }
