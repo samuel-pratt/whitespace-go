@@ -86,11 +86,13 @@ func main() {
 			case "NS":
 				index := len(stack) - 1
 				stack = append(stack, stack[index])
+
 			// STS = duplicate the 0 based n-th item from stack onto top of stack
 			case "TS":
 				value, offset := parseInt(instructions[i+3:])
 				stack = append(stack, stack[value])
 				i = i + 3 + offset
+
 			// SNT = swap top two items on stack
 			case "NT":
 				// Pop first item
@@ -105,11 +107,13 @@ func main() {
 
 				stack = append(stack, itemOne)
 				stack = append(stack, itemTwo)
+
 			// SNN = discard top item on stack
 			case "NN":
 				// Pop
 				index := len(stack) - 1
 				stack = stack[:index]
+
 			// STN = discard n items from top of stack while keeping top item
 			case "TN":
 				index := len(stack) - 1
@@ -155,14 +159,53 @@ func main() {
 				switch command {
 				// TSSS = add the top two items of the stack together
 				case "SS":
+					indexOne := len(stack) - 1
+					itemOne := stack[indexOne]
+
+					indexTwo := len(stack) - 1
+					itemTwo := stack[indexTwo]
+
+					stack[indexOne] = itemOne + itemTwo
+
 				// TSST = subtract the top item of stack from second item on the stack
 				case "ST":
+					index := len(stack) - 1
+					itemOne := stack[index]
+
+					index = len(stack) - 1
+					itemTwo := stack[index]
+
+					stack[index] = itemTwo - itemOne
+
 				// TSSN = multiply the top two items on the stack together
 				case "SN":
+					indexOne := len(stack) - 1
+					itemOne := stack[indexOne]
+
+					indexTwo := len(stack) - 1
+					itemTwo := stack[indexTwo]
+
+					stack[indexOne] = itemOne * itemTwo
+
 				// TSTS = integer division the second item on the stack by the top item on the stack
 				case "TS":
+					index := len(stack) - 1
+					itemOne := stack[index]
+
+					index = len(stack) - 1
+					itemTwo := stack[index]
+
+					stack[index] = int(itemTwo / itemOne)
+
 				// TSTT = modulo of the second item on the stack with the top item on the stack
 				case "TT":
+					index := len(stack) - 1
+					itemOne := stack[index]
+
+					index = len(stack) - 1
+					itemTwo := stack[index]
+
+					stack[index] = itemTwo % itemOne
 				}
 			// TT = Heap Access
 			case 10:
@@ -181,6 +224,7 @@ func main() {
 					stack = stack[:index]
 
 					heap[itemTwo] = itemOne
+
 				// TTT = pop top item of stack, and push the item corresponding to that heap address to the top of the stack
 				case "T":
 					// Pop first item
@@ -201,6 +245,7 @@ func main() {
 					stack = stack[:index]
 
 					fmt.Print(strconv.Itoa(item))
+
 				// TNST = pop the top integer and print as integer
 				case "ST":
 					index := len(stack) - 1
@@ -208,6 +253,7 @@ func main() {
 					stack = stack[:index]
 
 					fmt.Print(item)
+
 				// TNTS = pop the top integer, read a character from input, and save to heap with popped value as key, input as value
 				case "TS":
 					index := len(stack) - 1
@@ -222,6 +268,7 @@ func main() {
 					}
 
 					heap[item] = int(char)
+
 				// TNTT = pop the top integer, read an integer from input, and save to heap with popped value as key, input as value
 				case "TT":
 					index := len(stack) - 1
