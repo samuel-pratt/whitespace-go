@@ -1,4 +1,4 @@
-++++ by samuel-pratt ++++	  	   
+++++ run_with_brainfuck_or_whitespace_! ++++ 	  	   
 [	
      >++++		  	 	
 	[
@@ -18,7 +18,7 @@
 	------.--------.
      			  	 
 	>>+.>++.
-     		 		  
+by samuel pratt   		 		  
 	
      		  	  
 	
