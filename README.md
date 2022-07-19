@@ -14,5 +14,5 @@ Requires Go to build.
 git clone https://github.com/samuel-pratt/whitespace-go.git
 cd whitespace-go
 go build
-./brainfuck-go hello_world.ws
+./whitespace-go hello_world.ws
 ```
